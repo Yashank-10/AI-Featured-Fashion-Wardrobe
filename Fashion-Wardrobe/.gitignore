@@ -1,0 +1,22 @@
+# Backend
+Backend/venv/
+Backend/__pycache__/
+Backend/app/__pycache__/
+Backend/app/**/__pycache__/
+Backend/*.log
+Backend/*.sqlite3
+Backend/*.db
+
+# Backend runtime data
+Backend/uploads/
+
+# Frontend
+Frontend/FashionAppUI/node_modules/
+Frontend/FashionAppUI/build/
+Frontend/FashionAppUI/dist/
+Frontend/FashionAppUI/.vite-cache/
+Frontend/FashionAppUI/node_modules/.vite*/
+
+# OS / editor
+.DS_Store
+Thumbs.db
