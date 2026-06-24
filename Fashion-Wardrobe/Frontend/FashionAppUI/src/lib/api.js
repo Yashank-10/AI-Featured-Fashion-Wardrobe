@@ -133,6 +133,14 @@ export const toggleFavoriteItem = (token, itemId) =>
     },
   })
 
+export const markWardrobeItemWorn = (token, itemId) =>
+  request(`/wardrobe/items/${itemId}/wear`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
 export const getRecommendations = (token, params = {}) => {
   const searchParams = new URLSearchParams()
 

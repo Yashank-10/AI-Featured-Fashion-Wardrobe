@@ -9,6 +9,7 @@ import {
   getWardrobeItems,
   getWardrobeStats,
   loginUser,
+  markWardrobeItemWorn,
   registerUser,
   submitRecommendationFeedback,
   uploadWardrobeItem,
@@ -17,6 +18,16 @@ import {
 } from './lib/api'
 
 const TOKEN_KEY = 'fashion-wardrobe-token'
+const SAVED_LOOKS_KEY = 'fashion-wardrobe-saved-looks'
+
+const readSavedLooks = () => {
+  try {
+    const rawValue = localStorage.getItem(SAVED_LOOKS_KEY)
+    return rawValue ? JSON.parse(rawValue) : []
+  } catch {
+    return []
+  }
+}
 
 const App = () => {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || '')
@@ -24,6 +35,7 @@ const App = () => {
   const [wardrobeItems, setWardrobeItems] = useState([])
   const [wardrobeStats, setWardrobeStats] = useState(null)
   const [recommendations, setRecommendations] = useState([])
+  const [savedLooks, setSavedLooks] = useState(readSavedLooks)
   const [currentView, setCurrentView] = useState('wardrobe')
   const [authLoading, setAuthLoading] = useState(false)
   const [appLoading, setAppLoading] = useState(false)
@@ -68,6 +80,10 @@ const App = () => {
 
     return () => clearTimeout(timeoutId)
   }, [token])
+
+  useEffect(() => {
+    localStorage.setItem(SAVED_LOOKS_KEY, JSON.stringify(savedLooks))
+  }, [savedLooks])
 
   const handleAuthSuccess = async (nextToken) => {
     localStorage.setItem(TOKEN_KEY, nextToken)
@@ -147,6 +163,43 @@ const App = () => {
     await refreshWardrobe()
   }
 
+  const handleMarkItemWorn = async (itemId) => {
+    setError('')
+    await markWardrobeItemWorn(token, itemId)
+    await refreshWardrobe()
+  }
+
+  const handleSaveLook = ({ itemIds, title, date, notes = '', source = 'planner', occasion = '', season = '' }) => {
+    const selectedItems = wardrobeItems.filter((item) => itemIds.includes(item.id))
+
+    if (selectedItems.length === 0) {
+      return
+    }
+
+    const fallbackTitle = selectedItems
+      .map((item) => item.subcategory || item.category)
+      .slice(0, 3)
+      .join(' + ')
+
+    setSavedLooks((currentLooks) => [
+      {
+        id: Date.now(),
+        title: title?.trim() || fallbackTitle || 'Saved look',
+        date: date || '',
+        notes: notes.trim(),
+        source,
+        occasion,
+        season,
+        itemIds,
+      },
+      ...currentLooks,
+    ])
+  }
+
+  const handleDeleteSavedLook = (lookId) => {
+    setSavedLooks((currentLooks) => currentLooks.filter((look) => look.id !== lookId))
+  }
+
   const handleLoadRecommendations = async (filters) => {
     setRecommendationLoading(true)
     setError('')
@@ -198,12 +251,16 @@ const App = () => {
       currentUser={user}
       items={wardrobeItems}
       stats={wardrobeStats}
+      savedLooks={savedLooks}
       loading={appLoading}
       error={error}
       onAddItem={handleUploadItem}
       onDeleteItem={handleDeleteItem}
+      onDeleteSavedLook={handleDeleteSavedLook}
       onToggleFavorite={handleToggleFavorite}
+      onMarkItemWorn={handleMarkItemWorn}
       onGenerateRecommendations={handleLoadRecommendations}
+      onSaveLook={handleSaveLook}
       onLogout={handleLogout}
     />
   ) : (
@@ -211,11 +268,13 @@ const App = () => {
       currentUser={user}
       items={wardrobeItems}
       recommendations={recommendations}
+      savedLooks={savedLooks}
       loading={recommendationLoading}
       error={error}
       onBack={() => setCurrentView('wardrobe')}
       onRefresh={handleLoadRecommendations}
       onFeedback={handleFeedback}
+      onSaveLook={handleSaveLook}
       onLogout={handleLogout}
     />
   )

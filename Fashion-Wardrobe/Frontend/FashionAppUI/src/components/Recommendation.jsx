@@ -1,21 +1,81 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
+  Bookmark,
+  CalendarDays,
   ChevronLeft,
-  RefreshCcw,
   Heart,
-  ThumbsUp,
-  Sparkles,
-  LogOut,
+  Info,
   LoaderCircle,
+  LogOut,
+  RefreshCcw,
+  Sparkles,
+  ThumbsUp,
 } from 'lucide-react'
 import { resolveImageUrl } from '../lib/api'
 
-const RecommendationCard = ({ recommendation, onFeedback }) => {
+const scoreTone = (score) => {
+  if (score >= 85) {
+    return {
+      label: 'Excellent',
+      detail: 'This combination is strongly aligned with your wardrobe signals.',
+    }
+  }
+  if (score >= 70) {
+    return {
+      label: 'Strong',
+      detail: 'A balanced outfit with only small trade-offs.',
+    }
+  }
+  return {
+    label: 'Experimental',
+    detail: 'Worth trying if you want a fresh mix or a bold styling direction.',
+  }
+}
+
+const explanationPoints = (recommendation) => {
+  const notes = []
+
+  if (recommendation.color_harmony_score >= 85) {
+    notes.push('The palette is cohesive, so the colors support each other instead of competing.')
+  } else if (recommendation.color_harmony_score >= 70) {
+    notes.push('The palette is mostly balanced, with enough contrast to keep the outfit interesting.')
+  } else {
+    notes.push('The colors are more adventurous, which can create a statement look.')
+  }
+
+  if (recommendation.body_shape_score >= 80) {
+    notes.push('The silhouette fits your saved body-shape preferences especially well.')
+  } else {
+    notes.push('The silhouette is wearable, but it may not be the most optimized option for fit.')
+  }
+
+  if (recommendation.undertone_score >= 80) {
+    notes.push('The shades align well with your undertone settings, which should feel flattering on skin.')
+  } else {
+    notes.push('The shades are flexible enough to wear, even if undertone matching is not perfect.')
+  }
+
+  return notes
+}
+
+const ScoreCard = ({ label, value }) => (
+  <div className="rounded-2xl bg-[#fdf2f5] px-4 py-3">
+    <p className="text-[#a17a8a]/60 text-xs uppercase tracking-[0.2em]">{label}</p>
+    <p className="text-[#a17a8a] text-xl font-bold">{value}%</p>
+  </div>
+)
+
+const RecommendationCard = ({ recommendation, onFeedback, onSaveLook }) => {
   const [rating, setRating] = useState(5)
   const [sending, setSending] = useState(false)
+  const [plannerDate, setPlannerDate] = useState('')
+  const [notes, setNotes] = useState('')
   const title =
     recommendation.items.map((item) => item.subcategory || item.category).join(' + ') ||
     'Suggested outfit'
+
+  const scoreSummary = scoreTone(recommendation.overall_score)
+  const reasons = useMemo(() => explanationPoints(recommendation), [recommendation])
 
   const sendFeedback = async (helpful) => {
     setSending(true)
@@ -32,13 +92,27 @@ const RecommendationCard = ({ recommendation, onFeedback }) => {
     }
   }
 
+  const handleSaveLook = () => {
+    onSaveLook({
+      itemIds: recommendation.item_ids,
+      title,
+      date: plannerDate,
+      notes,
+      source: 'recommendation',
+      occasion: recommendation.occasion || '',
+      season: '',
+    })
+    setNotes('')
+    setPlannerDate('')
+  }
+
   return (
     <div className="bg-white rounded-[2rem] border border-[#f0d5db] p-6 space-y-6 shadow-sm">
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div>
           <h3 className="text-[#a17a8a] font-bold text-xl">{title}</h3>
           <p className="text-[#a17a8a]/60 text-sm">
-            Occasion: {recommendation.occasion || 'Everyday'}
+            Occasion: {recommendation.occasion || 'Everyday'} • {scoreSummary.label} match
           </p>
         </div>
 
@@ -67,21 +141,57 @@ const RecommendationCard = ({ recommendation, onFeedback }) => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-        <div className="rounded-2xl bg-[#fdf2f5] px-4 py-3">
-          <p className="text-[#a17a8a]/60 text-xs uppercase tracking-[0.2em]">Overall</p>
-          <p className="text-[#a17a8a] text-xl font-bold">{recommendation.overall_score}%</p>
+        <ScoreCard label="Overall" value={recommendation.overall_score} />
+        <ScoreCard label="Color" value={recommendation.color_harmony_score} />
+        <ScoreCard label="Shape" value={recommendation.body_shape_score} />
+        <ScoreCard label="Undertone" value={recommendation.undertone_score} />
+      </div>
+
+      <div className="rounded-[1.75rem] bg-[#fff8fa] border border-[#f0d5db] p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <Info size={16} className="text-[#d68c67]" />
+          <h4 className="text-[#a17a8a] font-semibold">Why this outfit works</h4>
         </div>
-        <div className="rounded-2xl bg-[#fdf2f5] px-4 py-3">
-          <p className="text-[#a17a8a]/60 text-xs uppercase tracking-[0.2em]">Color</p>
-          <p className="text-[#a17a8a] text-xl font-bold">{recommendation.color_harmony_score}%</p>
+        <p className="text-sm text-[#a17a8a]/70">{scoreSummary.detail}</p>
+        <div className="space-y-2">
+          {reasons.map((reason) => (
+            <div
+              key={reason}
+              className="rounded-2xl bg-white border border-[#f0d5db] px-4 py-3 text-sm text-[#a17a8a]/80"
+            >
+              {reason}
+            </div>
+          ))}
         </div>
-        <div className="rounded-2xl bg-[#fdf2f5] px-4 py-3">
-          <p className="text-[#a17a8a]/60 text-xs uppercase tracking-[0.2em]">Shape</p>
-          <p className="text-[#a17a8a] text-xl font-bold">{recommendation.body_shape_score}%</p>
+      </div>
+
+      <div className="rounded-[1.75rem] bg-[#fff8fa] border border-[#f0d5db] p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <CalendarDays size={16} className="text-[#d68c67]" />
+          <h4 className="text-[#a17a8a] font-semibold">Save this look</h4>
         </div>
-        <div className="rounded-2xl bg-[#fdf2f5] px-4 py-3">
-          <p className="text-[#a17a8a]/60 text-xs uppercase tracking-[0.2em]">Undertone</p>
-          <p className="text-[#a17a8a] text-xl font-bold">{recommendation.undertone_score}%</p>
+        <div className="grid grid-cols-1 md:grid-cols-[180px_minmax(0,1fr)_auto] gap-3">
+          <input
+            type="date"
+            value={plannerDate}
+            onChange={(event) => setPlannerDate(event.target.value)}
+            className="w-full rounded-2xl border border-[#e8b4c0] bg-white px-4 py-3 text-sm text-[#a17a8a]"
+          />
+          <input
+            type="text"
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            placeholder="Optional planner note"
+            className="w-full rounded-2xl border border-[#e8b4c0] bg-white px-4 py-3 text-sm text-[#a17a8a]"
+          />
+          <button
+            type="button"
+            onClick={handleSaveLook}
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#a17a8a] to-[#d9a5b3] px-5 py-3 text-white font-semibold"
+          >
+            <Bookmark size={16} />
+            Save
+          </button>
         </div>
       </div>
 
@@ -128,11 +238,13 @@ const Recommendation = ({
   currentUser,
   items,
   recommendations,
+  savedLooks,
   loading,
   error,
   onBack,
   onRefresh,
   onFeedback,
+  onSaveLook,
   onLogout,
 }) => {
   const [filters, setFilters] = useState({
@@ -192,7 +304,7 @@ const Recommendation = ({
           </div>
         </div>
 
-        <section className="bg-white rounded-[2rem] border border-[#f0d5db] p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <section className="bg-white rounded-[2rem] border border-[#f0d5db] p-6 grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
             <p className="text-[#a17a8a]/60 text-xs uppercase tracking-[0.2em]">Stylist</p>
             <p className="text-[#a17a8a] font-semibold mt-2">
@@ -202,6 +314,10 @@ const Recommendation = ({
           <div>
             <p className="text-[#a17a8a]/60 text-xs uppercase tracking-[0.2em]">Wardrobe Size</p>
             <p className="text-[#a17a8a] font-semibold mt-2">{items.length} item(s)</p>
+          </div>
+          <div>
+            <p className="text-[#a17a8a]/60 text-xs uppercase tracking-[0.2em]">Saved Looks</p>
+            <p className="text-[#a17a8a] font-semibold mt-2">{savedLooks.length}</p>
           </div>
           <label className="block">
             <span className="text-[#a17a8a]/60 text-xs uppercase tracking-[0.2em]">Occasion</span>
@@ -258,6 +374,7 @@ const Recommendation = ({
                 key={`${recommendation.item_ids.join('-')}-${index}`}
                 recommendation={recommendation}
                 onFeedback={onFeedback}
+                onSaveLook={onSaveLook}
               />
             ))}
           </div>
