@@ -3,6 +3,8 @@ Backend/venv/
 Backend/__pycache__/
 Backend/app/__pycache__/
 Backend/app/**/__pycache__/
+Backend/.env
+Backend/.python-version
 Backend/*.log
 Backend/*.sqlite3
 Backend/*.db
@@ -16,10 +18,8 @@ Frontend/FashionAppUI/build/
 Frontend/FashionAppUI/dist/
 Frontend/FashionAppUI/.vite-cache/
 Frontend/FashionAppUI/node_modules/.vite*/
+Frontend/FashionAppUI/*.log
 
 # OS / editor
 .DS_Store
 Thumbs.db
-
-Clothy_Buddy_Final_Report.md
-TABLE_OF_CONTENTS.md
