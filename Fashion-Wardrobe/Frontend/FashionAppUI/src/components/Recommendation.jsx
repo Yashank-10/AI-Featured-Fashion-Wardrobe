@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
   Bookmark,
   CalendarDays,
@@ -8,10 +8,13 @@ import {
   LoaderCircle,
   LogOut,
   RefreshCcw,
+  Shirt,
   Sparkles,
   ThumbsUp,
 } from 'lucide-react'
 import { resolveImageUrl } from '../lib/api'
+
+void React
 
 const scoreTone = (score) => {
   if (score >= 85) {
@@ -128,11 +131,15 @@ const RecommendationCard = ({ recommendation, onFeedback, onSaveLook }) => {
             className="rounded-[1.5rem] border border-[#f0d5db] bg-[#fffafb] p-4 text-center"
           >
             <div className="aspect-square rounded-[1.25rem] bg-white flex items-center justify-center p-4 mb-3">
-              <img
-                src={resolveImageUrl(item.image_path)}
-                alt={item.subcategory || item.category}
-                className="max-w-full max-h-full object-contain"
-              />
+              {item.image_path ? (
+                <img
+                  src={resolveImageUrl(item.image_path)}
+                  alt={item.subcategory || item.category}
+                  className="max-w-full max-h-full object-contain"
+                />
+              ) : (
+                <Shirt className="text-[#d9a5b3]" size={28} />
+              )}
             </div>
             <h4 className="text-[#a17a8a] font-semibold capitalize">{item.subcategory || item.category}</h4>
             <p className="text-sm text-[#a17a8a]/60 capitalize">{item.color_primary}</p>
@@ -173,6 +180,7 @@ const RecommendationCard = ({ recommendation, onFeedback, onSaveLook }) => {
         <div className="grid grid-cols-1 md:grid-cols-[180px_minmax(0,1fr)_auto] gap-3">
           <input
             type="date"
+            aria-label="Planner date"
             value={plannerDate}
             onChange={(event) => setPlannerDate(event.target.value)}
             className="w-full rounded-2xl border border-[#e8b4c0] bg-white px-4 py-3 text-sm text-[#a17a8a]"

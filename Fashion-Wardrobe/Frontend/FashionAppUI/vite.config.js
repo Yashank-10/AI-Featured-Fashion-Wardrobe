@@ -5,9 +5,15 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig({
   cacheDir: '.vite-cache',
+  publicDir: false,
   build: {
-    outDir: 'build',
+    outDir: 'dist',
     emptyOutDir: true,
   },
-  plugins: [react(), tailwindcss()],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/test/setup.js',
+  },
+  plugins: [react({ jsxRuntime: 'automatic' }), tailwindcss()],
 })

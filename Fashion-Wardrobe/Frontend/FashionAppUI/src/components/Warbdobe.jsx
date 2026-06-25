@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
   ArrowUpDown,
   BarChart3,
@@ -19,6 +19,8 @@ import {
   WandSparkles,
 } from 'lucide-react'
 import { resolveImageUrl } from '../lib/api'
+
+void React
 
 const initialFormValues = {
   category: 'top',
