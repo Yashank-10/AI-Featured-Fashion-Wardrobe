@@ -23,3 +23,11 @@ Frontend/FashionAppUI/*.log
 # OS / editor
 .DS_Store
 Thumbs.db
+
+.env
+*.db
+uploads/
+__pycache__/
+node_modules/
+dist/
+venv/
